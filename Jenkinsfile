@@ -28,4 +28,20 @@ pipeline{
             }
         }
     }
+     post {
+        success {
+            emailext (
+                subject: "Job success '${env.JOB_NAME}' - Build # ${env.BUILD_NUMBER} - Successful",
+                body: "SUCCESS: Job '${env.JOB_NAME}' - Build # ${env.BUILD_NUMBER} is successful. Check console output at ${env.BUILD_URL}",
+                to: "ligidnex@gmail.com",
+            )
+        }
+        failure {
+            emailext (
+                subject: "Job '${env.JOB_NAME}' - Build # ${env.BUILD_NUMBER} - Failed",
+                body: "FAILURE: Job '${env.JOB_NAME}' - Build # ${env.BUILD_NUMBER} failed. Check console output at ${env.BUILD_URL}",
+                to: "ligidnex@gmail.com",
+            )
+        }
+    }
 }
