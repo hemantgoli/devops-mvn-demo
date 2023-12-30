@@ -1,47 +1,47 @@
-pipeline{
+pipeline {
     agent any
-/*    
     tools {
-         maven 'maven'
-         jdk 'java'
+        maven 'Maven363'
     }
-*/
-    stages{
-        stage('Git Checkout'){
-            steps{
-                checkout([$class: 'GitSCM', branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[credentialsId: 'mygithub', url: 'https://github.com/hemantgoli/devops-mvn-demo.git']]])
+    options {
+        timeout(10)
+        buildDiscarder logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '5', numToKeepStr: '5')
+    }
+    stages {
+        stage('Build') {
+            steps {
+                sh "mvn clean install"
             }
         }
-        stage('mvn clean'){
-            steps{
-               bat 'mvn clean'
-            }
-        }
-        stage('mvn compile'){
-            steps{
-               bat 'mvn compile'
-            }
-        }
-        stage('mvn package'){
-            steps{
-               bat 'mvn package'
+        stage('upload artifact to nexus') {
+            steps {
+                nexusArtifactUploader artifacts: [
+                    [
+                        artifactId: 'wwp', 
+                        classifier: '', 
+                        file: 'target/wwp-1.0.0.war', 
+                        type: 'war'
+                    ]
+                ], 
+                    credentialsId: 'nexus3', 
+                    groupId: 'koddas.web.war', 
+                    nexusUrl: '10.0.0.91:8081', 
+                    nexusVersion: 'nexus3', 
+                    protocol: 'http', 
+                    repository: 'samplerepo', 
+                    version: '1.0.0'
             }
         }
     }
-     post {
-        success {
-            emailext (
-                subject: "Job success '${env.JOB_NAME}' - Build # ${env.BUILD_NUMBER} - Successful",
-                body: "SUCCESS: Job '${env.JOB_NAME}' - Build # ${env.BUILD_NUMBER} is successful. Check console output at ${env.BUILD_URL}",
-                to: "ligidnex@gmail.com",
-            )
+    post {
+        always{
+            deleteDir()
         }
         failure {
-            emailext (
-                subject: "Job '${env.JOB_NAME}' - Build # ${env.BUILD_NUMBER} - Failed",
-                body: "FAILURE: Job '${env.JOB_NAME}' - Build # ${env.BUILD_NUMBER} failed. Check console output at ${env.BUILD_URL}",
-                to: "ligidnex@gmail.com",
-            )
+            echo "sendmail -s mvn build failed receipients@my.com"
+        }
+        success {
+            echo "The job is successful"
         }
     }
 }
